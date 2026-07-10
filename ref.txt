@@ -1,0 +1,210 @@
+CREATING ARRAYS
+np.linspace(start, stop, N)   → N floats from start to stop (includes stop)
+np.arange(start, stop)        → integers from start to stop-1
+np.zeros(N)                   → N zeros
+np.zeros_like(arr)            → zeros, same size as arr
+np.full_like(arr, np.nan)     → NaN, same size as arr
+
+INDEXING
+arr[0]       → first element
+arr[-1]      → last element
+arr[::-1]    → reversed array          ← TIME REVERSAL
+arr[2:5]     → elements at 2,3,4
+arr[mask]    → keep only True positions
+
+MATH
+np.abs(arr)         → absolute value of every element
+np.floor(x)         → round DOWN   (-1.3 → -2)
+np.ceil(x)          → round UP     (-1.3 → -1)
+round(x)            → round to nearest integer
+int(x)              → cut off decimal (towards zero)
+np.clip(x, a, b)    → keep x within [a, b]
+np.sqrt(arr)        → square root
+np.sin(arr)         → sine (input in radians)
+np.cos(arr)         → cosine
+np.pi               → 3.14159...
+
+OPERATIONS (all element-wise)
+arr + arr2    arr - arr2    arr * arr2    arr / arr2
+arr ** 2      arr * 5       arr / 2       arr + 100
+n % k         → remainder   (6%3=0, 7%3=1)
+n // k        → integer division (7//3=2)
+
+CONDITIONS (use & and |, NOT and/or for arrays)
+arr >= 0               → True/False array
+(arr >= 0) & (arr <= 4)  → AND
+(arr < 0)  | (arr > 4)   → OR
+
+STATISTICS
+np.sum(arr)    np.mean(arr)    np.max(arr)    np.min(arr)
+np.mean((a-b)**2)   → MSE between a and b
+
+USEFUL
+np.isclose(a, b)     → True if nearly equal (handles float errors)
+np.allclose(a, b)    → True if ALL elements nearly equal
+np.where(cond, a, b) → element-wise if-else
+len(arr)             → number of elements
+
+CONTINUOUS SIGNAL SETUP
+T_MIN, T_MAX, N = -4.0, 4.0, 4001
+t = np.linspace(T_MIN, T_MAX, N)
+dt = t[1] - t[0]
+
+TIME REVERSAL x(-t)
+xr = x[::-1]                    ← only if t is symmetric around 0
+                                   (same range on both sides)
+
+IF t NOT SYMMETRIC:
+for i in range(len(t)):
+    t_needed = -t[i]
+    if t_needed < t[0] or t_needed > t[-1]:
+        result[i] = 0
+        continue
+    idx = int(round((t_needed - t[0]) / dt))
+    idx = int(np.clip(idx, 0, len(t)-1))
+    result[i] = x[idx]
+
+EVEN-ODD DECOMPOSITION
+xr = x[::-1]                    ← time reversal
+xe = (x + xr) / 2              ← even part
+xo = (x - xr) / 2              ← odd part
+# check: xe + xo == x
+
+TIME SCALING  y(t) = x(t/k)
+t_query = t / k
+valid = (t_query >= T_MIN) & (t_query <= T_MAX)
+y = np.zeros_like(t)
+y[valid] = interpolate(t, x, t_query[valid])
+
+INTERPOLATION (for one query point tq)
+pos = (tq - t[0]) / dt
+left  = int(np.floor(pos))
+right = left + 1
+value = 0.5 * (x[left] + x[right])
+
+SINUSOID
+x[n] = A * np.cos(Omega0 * n + phi)
+time shift:   A * np.cos(Omega0 * (n - n0) + phi)
+phase change: A * np.cos(Omega0 * n + phi + phi0)
+RELATIONSHIP: phi0 = -Omega0 * n0
+
+DISCRETE SIGNAL SETUP
+INF = 8
+sig = np.zeros(2*INF + 1)      ← 17 elements for n=-8 to n=8
+position = n + INF              ← convert n to array position
+n        = position - INF       ← convert position to n
+
+DISCRETE TIME REVERSAL
+sig_rev = sig[::-1]
+
+DISCRETE TIME SCALING y[n] = x[n/k]
+result = np.zeros(2*INF + 1)
+for p_out in range(2*INF + 1):
+    n = p_out - INF
+    if n % k == 0:
+        n_over_k = n // k
+        p_in = n_over_k + INF
+        if 0 <= p_in <= 2*INF:
+            result[p_out] = x[p_in]
+
+WITH INTERPOLATION (when n%k != 0):
+    left_n  = int(np.floor(n/k))
+    right_n = int(np.ceil(n/k))
+    left_val  = x[left_n  + INF] if -INF <= left_n  <= INF else 0
+    right_val = x[right_n + INF] if -INF <= right_n <= INF else 0
+    result[p_out] = (left_val + right_val) / 2
+
+
+
+
+
+MATPLOTLIB
+plt.figure(figsize=(10, 4))
+plt.plot(t, x, label="x(t)", linewidth=1.5, linestyle='--', color='r')
+plt.title("title")
+plt.xlabel("t")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+LINESTYLES:  '-' solid  '--' dashed  ':' dotted  '-.' dashdot
+COLORS:      'r' red  'b' blue  'g' green  'k' black  'orange'
+
+SUBPLOTS
+fig, ax = plt.subplots(figsize=(10,4))
+ax.plot(...)  ax.set_title(...)  ax.set_xlabel(...)  ax.legend()
+
+fig, axes = plt.subplots(1, 2, figsize=(12,4))   ← side by side
+axes[0].plot(...)
+axes[1].plot(...)
+plt.tight_layout()
+
+STEM PLOT (for discrete signals)
+fig, ax = plt.subplots(figsize=(10,4))
+ml, sl, bl = ax.stem(n, x, label="x[n]")
+bl.set_visible(False)    ← hides baseline
+ax.legend()
+
+AXIS CONTROL
+ax.set_xlim(-4, 4)
+ax.set_ylim(-2, 2)
+ax.set_xticks(np.arange(-8, 9, 1))
+
+PYTHON
+for i, v in enumerate(arr):   ← gives index AND value
+for k in range(-12, 13):      ← -12 to 12 inclusive
+if best is None or e < best:  ← checking None
+a, b = function()             ← receive two return values
+f"value = {x:.3f}"           ← 3 decimal places in string
+continue                      ← skip to next loop iteration
+int(np.floor(x))              ← floor then convert to int
+
+COMMON PATTERNS
+# MSE
+float(np.mean((a - b) ** 2))
+
+# Find best k in a loop
+best_k, best_err = None, None
+for k in range(k_min, k_max+1):
+    e = mse(signal_k, target)
+    if best_err is None or e < best_err:
+        best_err = e
+        best_k = k
+
+# Reconstruction check
+error = np.max(np.abs(xe + xo - x))
+print(f"Error: {error:.2e}")    # should be ~0
+
+
+
+
+
+# 1. Time reversal
+x[::-1]
+
+# 2. Even-odd
+xe = (x + x[::-1]) / 2
+xo = (x - x[::-1]) / 2
+
+# 3. Time scaling query
+t_query = t / k
+
+# 4. Valid mask
+valid = (t_query >= T_MIN) & (t_query <= T_MAX)
+
+# 5. Phase-shift relationship
+phi0 = -Omega0 * n0
+
+# 6. Discrete position conversion
+position = n + INF
+n = position - INF
+
+# 7. Check divisibility
+if n % k == 0:   # n/k is integer
+
+# 8. Plot a signal
+plt.plot(t, x, label="x(t)")
+plt.legend()
+plt.show()
