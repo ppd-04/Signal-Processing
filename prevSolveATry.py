@@ -44,6 +44,7 @@ def interpolate_signal(
             result[i] = 0.5*(x_left+x_right)
 
     return result
+    # return np.interp(t_query, t_original, x_original)
 
 def time_scale(
     t: np.ndarray,
@@ -61,6 +62,9 @@ def time_scale(
     y = np.zeros_like(t, dtype=float)
     y[validMask]=interpolate_signal(t,x,t_query[validMask])
     return y
+
+
+    # return interpolate_signal(t,x, t/k)
 
 
 
